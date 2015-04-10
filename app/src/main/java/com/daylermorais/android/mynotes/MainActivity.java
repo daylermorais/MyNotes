@@ -1,64 +1,88 @@
 package com.daylermorais.android.mynotes;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 
+import com.daylermorais.android.mynotes.data.MyNotesContract;
+import com.daylermorais.android.mynotes.data.MyNotesProvider;
 
-public class MainActivity extends ActionBarActivity {
+import java.sql.SQLException;
+
+public class MainActivity extends Activity {
+
+    Button addSubject_bt;
+    ListView lv;
+    MyNotesProvider dbcon;
+    TextView subjectID_tv, subjectDescription_tv;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
+        dbcon = new MyNotesProvider(this);
+        try {
+            dbcon.open();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    }
+        addSubject_bt = (Button) findViewById(R.id.addsubject_bt_id);
+        lv = (ListView) findViewById(R.id.subjectList_id);
 
+        // onClickListner for addsubject Button
+        addSubject_bt.setOnClickListener(new View.OnClickListener() {
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+            @Override
+            public void onClick(View v) {
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+                Intent add_subject = new Intent(MainActivity.this, Add_subject.class);
+                startActivity(add_subject);
+            }
+        });
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        // Attach The Data From DataBase Into ListView Using Cursor Adapter
+        Cursor cursor = dbcon.readData();
+        String[] from = new String[]{
+                MyNotesContract.SubjectEntry._ID,
+                MyNotesContract.SubjectEntry.COLUMN_SUBJECT_DESCRIPTION
+        };
+        int[] to = new int[]{
+                R.id.subject_id,
+                R.id.subject_description
+        };
 
-        return super.onOptionsItemSelected(item);
-    }
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(
+                MainActivity.this, R.layout.view_subject_entry, cursor, from, to
+        );
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
+        adapter.notifyDataSetChanged();
+        lv.setAdapter(adapter);
 
-        public PlaceholderFragment() {
-        }
+        // OnClickListner For List Items
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                subjectID_tv = (TextView) view.findViewById(R.id.subject_id);
+                subjectDescription_tv = (TextView) view.findViewById(R.id.subject_description);
 
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
+                String subjectID_val = subjectID_tv.getText().toString();
+                String subjectDescription_val = subjectDescription_tv.getText().toString();
+
+                Intent modify_intent = new Intent(getApplicationContext(),
+                        Modify_subject.class);
+                modify_intent.putExtra("subjectDescription", subjectDescription_val);
+                modify_intent.putExtra("subjectID", subjectID_val);
+                startActivity(modify_intent);
+            }
+        });
     }
 }

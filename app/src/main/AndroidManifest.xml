@@ -21,6 +21,14 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main" >
         </activity>
+        <activity
+            android:name=".Add_subject"
+            android:label="@string/title_add_subject" >
+        </activity>
+        <activity
+            android:name=".Modify_subject"
+            android:label="@string/title_Modify_subject" >
+        </activity>
     </application>
 
 </manifest>
